@@ -31,6 +31,10 @@ private final ApiClient apiClient = new ApiClient(
 
 2. 测试用例
 
+    以下为[tapdata-example](https://github.com/tapd8/tapdata-examples) github仓库的示例代码
+    
+    请根据自己的实际环境，进行调整
+
 - create
 
 	在对象中set期望插入的值，执行即可
