@@ -189,3 +189,188 @@ mvn test -Dtest=TransactionLogV1ApiTest#transactionLogV1ControllerDeleteByIdTest
 mvn test -Dtest=TransactionLogV1ApiTest#transactionLogV1ControllerFindPageTest \
  -Dlimit=5 -Dskip=0
 ```
+
+## 查询条件说明
+
+调用分页查询接口，可以在 URL 查询字符串中添加 “filter” 查询条件过滤数据。
+
+**sdk对于查询条件，已有一些优化处理，在编写条件时，可以不需填入filter**
+
+以下为where的示例
+```
+Filter filter = new Filter();
+
+Map<String, Object> where = new HashMap();
+where.put("[field1]", "value");
+where.put("[field2][gt]", 1000);
+
+filter.setWhere(where);
+```
+
+默认支持以下几种过滤器：
+- **字段过滤器(Field filter)**: 按需返回指定的字段
+- **限定返回记录数过滤器(limit filter)**: 限定返回记录行数
+- **跳过指定记录数过滤器(Skip filter)**: 跳过指定行数返回
+- **查询条件过滤器(Where filter)**: 根据一组具有逻辑关系的条件查询匹配数据并返回，类似SQL 的 WHERE 子句。
+
+### 字段过滤器(Field filter)
+
+字段过滤器是指定返回的数据中包含或不包含某些字段。
+
+```
+filter[fields][propertyName]=<true|false>&filter[fields][propertyName]=<true|false>...
+```
+
+默认情况下，查询返回结果中包含数据模型的所有属性。如果您指定了至少一个字段过滤器的值为 true，那么查询返回结果中将仅包含您专门指定包含的那些字段。
+
+**例子**
+
+只返回 Logs 数据模型中的 level、date、message 字段属性的值：
+
+```
+?filter[fields][level]=true&filter[fields][message]=true&filter[fields][date]=true
+```
+
+返回的结果：
+
+```
+{
+"data": [
+{
+"level": "INFO",
+"message": "generator controller /home/lg/workspace/nodejs/apig/src/controllers/logs-v-1.controller.ts",         "date": "2019-07-13T09:12:05.134Z"
+}, {
+"level": "INFO",
+"message": "generator controller /home/lg/workspace/nodejs/apig/src/controllers/logs-v-1.controller.ts",         "date": "2019-07-13T09:12:05.134Z"
+},      ...
+]
+}
+```
+
+### 限定返回记录数过滤器(limit filter)
+
+限制返回记录总条数等于或小于一个指定的数值。通常与 skip filter 配合使用，实现分页查询。
+
+```
+filter[limit]=n
+```
+
+**例子**
+
+只返回10条查询结果：
+
+```
+?filter[limit]=10
+```
+
+### 跳过指定记录数过滤器(skip filter)
+
+返回第 1 个开始跳过指定个数记录后的查询结果。通常与 limit filter 配合使用，实现分页查询。
+
+```
+filter[skip]=n
+```
+
+**例子**
+
+查询结果中，从第 10 条记录开始返回：
+
+```
+?filter[skip]=10
+```
+
+**分页查询例子：**
+
+每页数据显示 10 条记录，查询第 5 页的数据：
+
+```
+?filter[limit]=10&filter[skip]=50
+```
+
+### 查询条件过滤器(where filter)
+
+在实现业务逻辑过程中，通常需要使用至少一组具有逻辑关系的查询条件来过滤出需要的数据。
+
+在这里您也可以指定一组或多组查询条件来查询数据。
+
+where filter 通常有两种写法，在下面的第一种写法，表示 指定属性 等于 指定值，即 等值查询；第二种写法表示 指定属性 操作符号 指定值，适用于类似 大于、小于 等逻辑查询。
+
+```
+?filter[where][property]=value
+
+?filter[where][property][operator]=value
+```
+
+- property: 数据模型中的属性名称
+- operator: 逻辑操作符，必须是下面表格中一个
+
+#### 操作符列表
+
+| 操作符号 | 说明 |
+| ------- | --- |
+| and | 逻辑 AND 操作。|
+| or | 逻辑 OR 操作。 |
+| gt, gte | 数字大小比较 大于(>)、大于等于(>=)。 |
+| lt, lte | 数字大小比较 小于（<）、小于等于（<）。 |
+| between | 区间查询，大于等于第一个值，小于等于第二个值。 |
+| inq, nin | IN / NOT IN 一组值. |
+| like, nlike | LIKE / NOT LIKE 模糊查询 |
+| regexp | 正则表达式匹配查询 |
+
+#### AND / OR 组合条件查询
+
+使用 and / or 操作符号，可以组合两个或多个查询条件调用接口查询数据。
+
+```
+filter[where][<and|or>][0]condition1&filter[where][<and|or>][1]condition2...
+```
+
+例一，查询 api-server 程序的 INFO 日志：
+
+```
+?filter[where][and][0][level]=INFO&filter[where][and][1][loggerName]=api-server
+```
+
+例二，查询 api-server 程序的 INFO 日志和 tapdata-managent 程序的 ERROR 日志：
+
+```
+?filter[where][or][0][and][0][level]=ERROR&filter[where][or][0][and][1][loggerName]=tapdata-managent&filter[where][or][1][and][0][level]=INFO&filter[where][or][1][and][1][loggerName]=api-server
+```
+
+#### gt / gte / lt / lte / like / nlike / regexp 操作符
+
+```
+filter[where][property][operator]=value
+```
+
+例一，查询日志时间大于指定日期的日志：
+
+```
+?filter[where][date][gte]=2019-07-18T10:26:00.000Z
+```
+
+注：日期格式为
+
+例二，正则表达式匹配 message ：
+
+```
+?filter[where][message][regexp]=LogsController.*findPage
+```
+
+#### inq / nin 操作符号
+
+```
+filter[where][property][<inq | nin>][0]=value1&filter[where][property][<inq | nin>][1]=value2...
+    ```
+
+    #### between 操作符号
+
+    ```
+    filter[where][property][<inq | nin>][0]=value1&filter[where][property][<inq | nin>][1]=value2...
+        ```
+
+        例一，查询日期在 2019-07-01 到 2019-07-02 之间的日志
+
+        ```
+        ?filter[where][date][between][0]=2019-07-01T00:00:00.000Z&filter[where][date][between][1]=2019-07-02T00:00:00.000Z
+        ```
