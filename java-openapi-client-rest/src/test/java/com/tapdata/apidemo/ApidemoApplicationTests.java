@@ -13,15 +13,32 @@ import java.util.Map;
 @SpringBootTest
 class ApidemoApplicationTests {
 
+	// Client ID
+ 	private static String CLIENT_ID = "5c0e750b7a5cd42464a5099d";
+    private static String CLIENT_SECRET = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+
+    // Authentication server and API server url
+    private static String BASE_URL="http://106.75.162.192:3030";
+    private static final String TOKEN_URL = BASE_URL + "/oauth/token";
+    private static String API_URL="http://106.75.162.192:3080";
+ 	
+    
+ 	// API Resource location
+    private static final String FIN_CUSTOMER_URL = API_URL + "/api/v1/FIN_CUSTOMER";
+
+
+
+
+
 	private String token = null;
 	private String id = null;
 
 	public void getToken() {
 		Map<String, Object> map = new HashMap<>(3);
 		map.put("grant_type", "client_credentials");
-		map.put("client_id", AppConstants.CLIENT_ID);
-		map.put("client_secret", AppConstants.CLIENT_SECRET);
-		Map<String, Object> result = HttpUtils.httpPost(AppConstants.TOKEN_URL, map, 5000);
+		map.put("client_id", CLIENT_ID);
+		map.put("client_secret", CLIENT_SECRET);
+		Map<String, Object> result = HttpUtils.httpPost(TOKEN_URL, map, 5000);
 		if (result != null && result.get("access_token") != null) {
 			token = (String)result.get("access_token");
 		}
@@ -34,7 +51,7 @@ class ApidemoApplicationTests {
 		customer.put("FIRST_NAME", "TEST");
 		Map<String, String> headers = new HashMap<>(1);
 		headers.put("access_token", token);
-		Map<String, Object> resultMap = HttpUtils.httpPost(AppConstants.FIN_CUSTOMER_URL, customer, headers, 5000);
+		Map<String, Object> resultMap = HttpUtils.httpPost(FIN_CUSTOMER_URL, customer, headers, 5000);
 
 		// TODO: test validations
 		System.out.println("====== Create customer ======");
@@ -50,7 +67,7 @@ class ApidemoApplicationTests {
 		Map<String, String> headers = new HashMap<>(1);
 		headers.put("access_token", token);
 		String id = updateMap.get("_id").toString();
-		String url = AppConstants.FIN_CUSTOMER_URL + "/" + id;
+		String url = FIN_CUSTOMER_URL + "/" + id;
 		updateMap.remove("_id");
 		Map<String, Object> resultMap = HttpUtils.httpPatch(url, updateMap, headers, 5000);
 
@@ -61,7 +78,7 @@ class ApidemoApplicationTests {
 	public void getTest() {
 		Map<String, String> headers = new HashMap<>(1);
 		headers.put("access_token", token);
-		String url = AppConstants.FIN_CUSTOMER_URL + "/" + id;
+		String url = FIN_CUSTOMER_URL + "/" + id;
 		Map<String, Object> resultMap = HttpUtils.httpGet(url, null, headers, 5000);
 
 		// TODO: test validations
@@ -73,7 +90,7 @@ class ApidemoApplicationTests {
 	public void deleteTest() {
 		Map<String, String> headers = new HashMap<>(1);
 		headers.put("access_token", token);
-		String url = AppConstants.FIN_CUSTOMER_URL + "/" + id;
+		String url = FIN_CUSTOMER_URL + "/" + id;
 		HttpUtils.httpDelete(url, null, headers, 5000);
 
 		// TODO: test validations
@@ -93,7 +110,7 @@ class ApidemoApplicationTests {
 		Map<String, String> headers = new HashMap<>(1);
 		headers.put("access_token", token);
 
-		Map<String, Object> resultMap = HttpUtils.httpGet(AppConstants.FIN_CUSTOMER_URL, param, headers, 5000);
+		Map<String, Object> resultMap = HttpUtils.httpGet(FIN_CUSTOMER_URL, param, headers, 5000);
 		List<Map<String, Object>> resultList = (List)resultMap.get("data");
 		Map<String, Object> totalMap = (Map<String, Object>)resultMap.get("total");
 

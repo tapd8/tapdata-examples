@@ -2,4 +2,7 @@
 
 ## Demo with maven test
 * Change the directory to the base path of RestApi example project.
-* Run "./test.sh".
+* Run 
+    
+      mvn test -Dtest=ApidemoApplicationTests
+ 
